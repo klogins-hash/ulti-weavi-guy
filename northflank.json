@@ -1,0 +1,161 @@
+{
+  "apiVersion": "v1",
+  "spec": {
+    "kind": "Workflow",
+    "spec": {
+      "type": "deployment",
+      "context": {
+        "stack": "northflank/ubuntu-20:latest",
+        "buildpack": {
+          "builder": "heroku/buildpacks:20"
+        }
+      },
+      "steps": [
+        {
+          "name": "Deploy Redis Addon",
+          "kind": "Addon",
+          "spec": {
+            "name": "ulti-weavi-redis",
+            "type": "redis",
+            "version": "7.0",
+            "plan": "nf-compute-10",
+            "replicas": 1,
+            "storage": "1Gi",
+            "options": {
+              "persistence": true,
+              "tls": false,
+              "publicAccess": false
+            }
+          }
+        },
+        {
+          "name": "Deploy PostgreSQL Addon",
+          "kind": "Addon", 
+          "spec": {
+            "name": "ulti-weavi-postgres",
+            "type": "postgresql",
+            "version": "15",
+            "plan": "nf-compute-10",
+            "replicas": 1,
+            "storage": "10Gi",
+            "options": {
+              "persistence": true,
+              "tls": false,
+              "publicAccess": false
+            }
+          }
+        },
+        {
+          "name": "Deploy Weaviate Service",
+          "kind": "DeploymentService",
+          "spec": {
+            "name": "ulti-weavi-weaviate",
+            "deployment": {
+              "external": {
+                "imagePath": "semitechnologies/weaviate:1.22.4"
+              }
+            },
+            "ports": [
+              {
+                "name": "http",
+                "internalPort": 8080,
+                "public": true,
+                "protocol": "HTTP"
+              }
+            ],
+            "resources": {
+              "replicas": 1,
+              "cpu": "0.5 vCPU",
+              "memory": "2 GB",
+              "storage": "10 GB"
+            },
+            "runtimeEnvironment": {
+              "QUERY_DEFAULTS_LIMIT": "25",
+              "AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED": "true",
+              "PERSISTENCE_DATA_PATH": "/var/lib/weaviate",
+              "DEFAULT_VECTORIZER_MODULE": "none",
+              "ENABLE_MODULES": "text2vec-cohere,text2vec-openai,generative-openai,generative-cohere",
+              "CLUSTER_HOSTNAME": "node1"
+            },
+            "volumes": [
+              {
+                "name": "weaviate-data",
+                "mountPath": "/var/lib/weaviate",
+                "size": "10Gi"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Deploy Backend API",
+          "kind": "CombinedService",
+          "spec": {
+            "name": "ulti-weavi-backend",
+            "deployment": {
+              "buildpack": {
+                "buildContext": "/backend"
+              }
+            },
+            "ports": [
+              {
+                "name": "http",
+                "internalPort": 8000,
+                "public": true,
+                "protocol": "HTTP"
+              }
+            ],
+            "resources": {
+              "replicas": 1,
+              "cpu": "1 vCPU", 
+              "memory": "2 GB"
+            },
+            "runtimeEnvironment": {
+              "PORT": "8000",
+              "PYTHONPATH": "/app",
+              "WEAVIATE_URL": "${LINK.ulti-weavi-weaviate.HOST}:${LINK.ulti-weavi-weaviate.PORT}",
+              "REDIS_URL": "redis://${ADDON.ulti-weavi-redis.HOST}:${ADDON.ulti-weavi-redis.PORT}",
+              "DATABASE_URL": "postgresql://${ADDON.ulti-weavi-postgres.USERNAME}:${ADDON.ulti-weavi-postgres.PASSWORD}@${ADDON.ulti-weavi-postgres.HOST}:${ADDON.ulti-weavi-postgres.PORT}/${ADDON.ulti-weavi-postgres.DATABASE}"
+            },
+            "secretGroups": ["ulti-weavi-secrets"],
+            "buildArguments": {
+              "PYTHON_VERSION": "3.11"
+            }
+          }
+        },
+        {
+          "name": "Deploy Frontend",
+          "kind": "CombinedService",
+          "spec": {
+            "name": "ulti-weavi-frontend",
+            "deployment": {
+              "buildpack": {
+                "buildContext": "/frontend"
+              }
+            },
+            "ports": [
+              {
+                "name": "http",
+                "internalPort": 3000,
+                "public": true,
+                "protocol": "HTTP"
+              }
+            ],
+            "resources": {
+              "replicas": 1,
+              "cpu": "0.5 vCPU",
+              "memory": "1 GB"
+            },
+            "runtimeEnvironment": {
+              "NODE_ENV": "production",
+              "NEXT_PUBLIC_API_URL": "${LINK.ulti-weavi-backend.HOST}"
+            },
+            "buildArguments": {
+              "NODE_VERSION": "18",
+              "NEXT_PUBLIC_API_URL": "${LINK.ulti-weavi-backend.HOST}"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
