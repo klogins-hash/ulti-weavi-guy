@@ -44,7 +44,7 @@ USER appuser
 # Make sure scripts in .local are usable
 ENV PATH=/home/appuser/.local/bin:$PATH
 
-# Health check for Northflank
+# Health check for Northflank deployment
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
