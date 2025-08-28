@@ -1,43 +1,42 @@
 # Core Framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-python-multipart==0.0.6
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
 
 # LangChain & Integrations
-langchain==0.1.0
-langchain-community==0.0.10
-langchain-anthropic==0.1.1
-langchain-cohere==0.1.0
+langchain>=0.1.0
+langchain-community>=0.0.10
+langchain-anthropic>=0.1.1
+langchain-cohere>=0.1.0
 
-# Weaviate
-weaviate-client==4.4.0
+# Weaviate - Let it control httpx version
+weaviate-client>=4.4.0
 
 # Scraping & Document Processing
-firecrawl-py==0.0.8
-apify-client==1.7.1
-unstructured[all-docs]==0.11.8
-beautifulsoup4==4.12.2
-requests==2.31.0
+firecrawl-py>=0.0.8
+apify-client>=1.7.1
+unstructured[all-docs]>=0.11.8
+beautifulsoup4>=4.12.2
+requests>=2.31.0
 
 # Data Processing
-pandas==2.1.4
-numpy==1.26.2
+pandas>=2.1.4
+numpy>=1.26.2
 
 # Environment & Config
-python-dotenv==1.0.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
 
 # Database
-sqlalchemy==2.0.23
-alembic==1.13.1
+sqlalchemy>=2.0.23
+alembic>=1.13.1
 
 # Async & Background Jobs
-celery==5.3.4
-redis==5.0.1
+celery>=5.3.4
+redis>=5.0.1
 
-# Utilities
-httpx==0.26.0
-aiofiles==23.2.1
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+# Utilities - Remove httpx to let weaviate-client control it
+aiofiles>=23.2.1
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
